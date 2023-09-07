@@ -1,6 +1,6 @@
 // Import required libraries
 const inquirer = require('inquirer');
-const table = require('console.table');
+const { printTable } = require('console-table-printer');
 const connection = require('./config/connection');
 
 connection.connect((err) => {
