@@ -9,8 +9,9 @@ INSERT INTO role (title, salary, department_id) VALUES
     ('Sales Manager', 90000, 2),
     ('Sales Associate', 50000, 2),
     ('Marketing Director', 75000, 3),
-    ('Software Engineer', 80000, 4),
-    ('IT Specialist', 65000, 4);
+    ('Engineering Director', 90000, 4),
+    ('IT Specialist', 65000, 4),
+    ('Software Engineer', 85000, 4);
 
 INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES
     ('John', 'Doe', 1, NULL),
@@ -20,3 +21,4 @@ INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES
     ('Emily', 'Brown', 7, NULL),
     ('Michael', 'Wilson', 5, 5),
     ('Milo', 'Miller', 6, 5);
+    
