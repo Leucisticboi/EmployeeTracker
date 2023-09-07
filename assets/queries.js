@@ -19,21 +19,28 @@ const question = [
 ];
 
 async function runMenu() {
-    try {
-        const answer = await inquirer.prompt(question);
-
-        switch (answer['main-menu']) {
-            case 'View all departments':
-                await viewAllDepartments();
-                break;
-            case 'View all roles':
-                await viewAllRoles();
-                break;
+    while(true) {
+        try {
+            const answer = await inquirer.prompt(question);
+    
+            switch (answer['main-menu']) {
+                case 'View all departments':
+                    await viewAllDepartments();
+                    break;
+                case 'View all roles':
+                    await viewAllRoles();
+                    break;
+                case 'View all employees':
+                    await viewAllEmployees();
+                    break;
+                case 'Quit':
+                    process.exit(0);
+            }
+        } catch (error) {
+            console.error(error);
         }
-    } catch (error) {
-        console.error(error);
     }
-};
+}
 
 async function viewAllDepartments() {
     db.query('SELECT * FROM department;', (err, results) => {
@@ -48,6 +55,17 @@ async function viewAllDepartments() {
 
 async function viewAllRoles() {
     db.query('SELECT * FROM role;', (err, results) => {
+        if (err) {
+            console.error(err);
+        }
+        const formattedResults = JSON.parse(JSON.stringify(results));
+        printTable(formattedResults);
+        runMenu();
+    });
+}
+
+async function viewAllEmployees() {
+    db.query('SELECT * FROM employee;', (err, results) => {
         if (err) {
             console.error(err);
         }
