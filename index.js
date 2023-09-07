@@ -4,10 +4,8 @@ const express = require(`express`);
 const connection = require(`./config/connection`);
 const { printTable } = require(`console-table-printer`);
 
-const PORT = process.env.PORT || 3001;
 const app = express();
 
-app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
 connection.connect((err) => {
@@ -158,15 +156,19 @@ const menu = () => {
     });
 }
 
+const consolePrinters = (res) => {
+    let formattedResults = JSON.parse(JSON.stringify(res));
+            console.clear();
+            printTable(formattedResults);
+            menu();
+}
+
 const viewAllDepartments = () => {
     connection.query(`SELECT d.id, d.name AS department FROM department d;`, (err, res) => {
         if (err) {
             console.error(err);
         } else if (res.length > 0) {
-            let formattedResults = JSON.parse(JSON.stringify(res));
-            console.clear();
-            printTable(formattedResults);
-            menu();
+            consolePrinters(res);
         }
     });
 }
