@@ -149,7 +149,48 @@ const menu = () => {
             });
         })
         } else if (choices === `Update an employee's role`) {
-            updateEmployeeRole();
+            connection.query(`SELECT CONCAT(e.first_name, " ", e.last_name) AS employee_name FROM employee e;`, (err, res) => {
+                if (err) {
+                    console.error(err);
+                } else if (res.length > 0) {
+                    let employeeList = res.map(({ employee_name }) => ({ value: employee_name }));
+                    inquirer.prompt([
+                        {
+                            name: `employee`,
+                            type: `list`,
+                            message: `Whose role would you like to update?`,
+                            choices: employeeList,
+                        }
+                    ])
+                    .then((answer) => {
+                        const employeeName = {};
+                        employeeName.first_name = answer.employee.split(" ")[0];
+                        employeeName.last_name = answer.employee.split(" ")[1];
+                        console.log(employeeName);
+                        connection.query(`SELECT r.title AS roles FROM role r;`, (err, res) => {
+                            if (err) {
+                                console.error(err)
+                            } else if (res.length > 0) {
+                                const roleList = res.map(({ roles }) => ({ value: roles }));
+                                inquirer.prompt([
+                                    {
+                                        name: `role`,
+                                        type: `list`,
+                                        message: `What is ${employeeName.first_name}'s new role?`,
+                                        choices: roleList,
+                                    }
+                                ])
+                                .then((answer) => {
+                                    const newRole = {};
+                                    newRole.role = answer.role;
+                                    console.log(newRole);
+                                    updateEmployeeRole(employeeName, newRole);
+                                })
+                            }
+                        });
+                    });
+                }
+            });
         } else if (choices === `Quit`) {
             process.exit();
         }
@@ -267,6 +308,11 @@ const addNewEmployee = (newEmployee) => {
     });
 }
 
-const updateEmployeeRole = () => {
-
+const updateEmployeeRole = (employeeName, newRole) => {
+    console.log(`updateEmployeeRole called`);
+    const { first_name, last_name } = employeeName;
+    console.log(first_name, last_name);
+    const { role } = newRole;
+    console.log(role);
+    // connection.query(`UPDATE e.role `)
 }
