@@ -3,6 +3,7 @@ const inquirer = require(`inquirer`);
 const express = require(`express`);
 const connection = require(`./config/connection`);
 const { printTable } = require(`console-table-printer`);
+const { mainMenuList, addNewDpt, addNewRoleQ } = require(`./queries-prompts/prompts`);
 
 const app = express();
 
@@ -18,23 +19,7 @@ connection.connect((err) => {
 });
 
 const menu = () => {
-    inquirer.prompt([
-        {
-            name: `choices`,
-            type: `list`,
-            message: `What would you like to do?`,
-            choices: [
-                `View all departments`,
-                `View all roles`,
-                `View all employees`,
-                `Add a new department`,
-                `Add a new role`,
-                `Add a new employee`,
-                `Update an employee's role`,
-                `Quit`
-            ]
-        }
-    ])
+    inquirer.prompt(mainMenuList)
     .then((result) => {
         const { choices } = result;
 
@@ -45,29 +30,12 @@ const menu = () => {
         } else if (choices === 'View all employees') {
             viewAllEmployees();
         } else if (choices === 'Add a new department') {
-            inquirer.prompt([
-                {
-                    name: 'title',
-                    type: 'input',
-                    message: 'What is the name of this new department?',
-                }
-            ])
+            inquirer.prompt(addNewDpt)
             .then((newDpt) => {
                 addNewDepartment(newDpt);
             })
         } else if (choices === 'Add a new role') {
-            inquirer.prompt([
-                {
-                    name: 'title',
-                    type: 'input',
-                    message: 'What is the name of this new role?'
-                },
-                {
-                    name: `salary`,
-                    type: `input`,
-                    message: 'What is the salary for this role?'
-                }
-            ])
+            inquirer.prompt(addNewRoleQ)
             .then((answer) => {
                 const newRole = {};
                 newRole.title = answer.title;
@@ -163,10 +131,10 @@ const menu = () => {
                         }
                     ])
                     .then((answer) => {
-                        const employeeName = {};
-                        employeeName.first_name = answer.employee.split(" ")[0];
-                        employeeName.last_name = answer.employee.split(" ")[1];
-                        console.log(employeeName);
+                        const employee = {};
+                        employee.first_name = answer.employee.split(" ")[0];
+                        employee.last_name = answer.employee.split(" ")[1];
+                        console.log(employee);
                         connection.query(`SELECT r.title AS roles FROM role r;`, (err, res) => {
                             if (err) {
                                 console.error(err)
@@ -176,15 +144,14 @@ const menu = () => {
                                     {
                                         name: `role`,
                                         type: `list`,
-                                        message: `What is ${employeeName.first_name}'s new role?`,
+                                        message: `What is ${employee.first_name}'s new role?`,
                                         choices: roleList,
                                     }
                                 ])
                                 .then((answer) => {
-                                    const newRole = {};
-                                    newRole.role = answer.role;
-                                    console.log(newRole);
-                                    updateEmployeeRole(employeeName, newRole);
+                                    employee.role = answer.role;
+                                    console.log(employee.role);
+                                    updateEmployeeRole(employee);
                                 })
                             }
                         });
@@ -219,10 +186,7 @@ const viewAllRoles = () => {
         if (err) {
             console.error(err);
         } else if (res.length > 0) {
-            let formattedResults = JSON.parse(JSON.stringify(res));
-            console.clear();
-            printTable(formattedResults);
-            menu();
+            consolePrinters(res);
         }
     });
 }
@@ -232,10 +196,7 @@ const viewAllEmployees = () => {
         if (err) {
             console.error(err);
         } else if (res.length > 0) {
-            let formattedResults = JSON.parse(JSON.stringify(res));
-            console.clear();
-            printTable(formattedResults);
-            menu();
+            consolePrinters(res);
         }
     });
 }
@@ -308,11 +269,14 @@ const addNewEmployee = (newEmployee) => {
     });
 }
 
-const updateEmployeeRole = (employeeName, newRole) => {
-    console.log(`updateEmployeeRole called`);
-    const { first_name, last_name } = employeeName;
-    console.log(first_name, last_name);
-    const { role } = newRole;
-    console.log(role);
-    // connection.query(`UPDATE e.role `)
+const updateEmployeeRole = (employee) => {
+    const { first_name, last_name, role } = employee;
+    connection.query(`UPDATE employee SET role_id = ? WHERE first_name = ? AND last_name = ?;`, [role, first_name, last_name], (err, res) => {
+        if (err) {
+            console.error(err);
+        } else {
+            console.log(`The employee table has been updated with ${first_name}'s new role!`);
+            menu();
+        }
+    });
 }
