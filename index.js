@@ -2,281 +2,60 @@
 const inquirer = require(`inquirer`);
 const express = require(`express`);
 const connection = require(`./config/connection`);
-const { printTable } = require(`console-table-printer`);
-const { mainMenuList, addNewDpt, addNewRoleQ } = require(`./queries-prompts/prompts`);
+const Prompts = require(`./js_modules/prompts`);
+const DatabaseExplorer = require(`./js_modules/queries`);
 
 const app = express();
+const prompts = new Prompts();
+const explore = new DatabaseExplorer();
 
 app.use(express.json());
+
+const menuChoices = {
+    'View all departments': explore.allDepartments,
+    'View all roles': explore.allRoles,
+    'View all employees': explore.allEmployees,
+    'Add a new department': () => explore.newDepartment(prompts.newDpt),
+    'Add a new role': () => explore.newRole(prompts.newDpt),
+    'Add a new employee': () => explore.newEmployee(prompts.newEmp),
+    "Update an employee's role": explore.updateEmployeeRole,
+    'Quit': () => {
+        console.clear();
+        process.exit();
+    },
+};
 
 connection.connect((err) => {
     if (err) {
         console.error(err);
         return;
     }
-    console.log(`Connected to 'employees' database.`)
+    console.clear();
+    console.log(prompts.header)
     menu();
 });
 
 const menu = () => {
-    inquirer.prompt(mainMenuList)
-    .then((result) => {
+    inquirer.prompt(prompts.mainMenuList).then((result) => {
         const { choices } = result;
+        const selectedFunction = menuChoices[choices];
 
-        if (choices === 'View all departments') {
-            viewAllDepartments();
-        } else if (choices === 'View all roles') {
-            viewAllRoles();
-        } else if (choices === 'View all employees') {
-            viewAllEmployees();
-        } else if (choices === 'Add a new department') {
-            inquirer.prompt(addNewDpt)
-            .then((newDpt) => {
-                addNewDepartment(newDpt);
-            })
-        } else if (choices === 'Add a new role') {
-            inquirer.prompt(addNewRoleQ)
-            .then((answer) => {
-                const newRole = {};
-                newRole.title = answer.title;
-                newRole.salary = answer.salary;
-                connection.query(`SELECT d.name AS department FROM department d;`, (err, res) => {
-                    if (err) {
-                        console.error(err)
-                    } else if (res.length > 0) {
-                        const formattedDeptName = res.map(({ department }) => ({ value: department }));
-                        inquirer.prompt([
-                            {
-                                name: `department`,
-                                type: `list`,
-                                message: `Which department does this role belong to?`,
-                                choices: formattedDeptName
-                            }
-                        ])
-                        .then((answer) => {
-                            newRole.department = answer.department;
-                            addNewRole(newRole);
-                        });
-                    }
-                });
-            });
-        } else if (choices === `Add a new employee`) {
-            inquirer.prompt([
-                {
-                    name: `first_name`,
-                    type: `input`,
-                    message: `What is the employee's first name?`
-                },
-                {
-                    name: `last_name`,
-                    type:  `input`,
-                    message: `What is the employee's last name?`
-                }
-            ])
-            .then((answer) => {
-            const newEmployee = {};
-            newEmployee.first_name = answer.first_name;
-            newEmployee.last_name = answer.last_name;
-            connection.query(`SELECT r.title FROM role r;`, (err, res) => {
-                if (err) {
-                    console.error(err);
-                } else if (res.length > 0) {
-                    const formattedResults = res.map(({ title }) => ({ value: title }));
-                    inquirer.prompt([
-                        {
-                            name: `role`,
-                            type: `list`,
-                            choices: formattedResults
-                        }
-                    ])
-                    .then((answer) => {
-                        newEmployee.role = answer.role;
-                        connection.query(`SELECT CONCAT(e.first_name, " ", e.last_name) AS manager FROM employee e WHERE manager_id IS null;`, (err, res) => {
-                            if (err) {
-                                console.error(err);
-                            } else if (res.length > 0) {
-                                const formattedResults2 = res.map(({ manager }) => ({ value: manager }));
-                                formattedResults2.push(`null`);
-                                inquirer.prompt([
-                                    {
-                                        name: `manager`,
-                                        type: `list`,
-                                        message: `Who is this employee's manager?`,
-                                        choices: formattedResults2
-                                    }
-                                ])
-                                .then((answer) => {
-                                    let manager = answer.manager.split(` `)[0];
-                                    newEmployee.manager = manager;
-                                    addNewEmployee(newEmployee);
-                                });
-                            }
-                        });
-                    });
-                }
-            });
-        })
-        } else if (choices === `Update an employee's role`) {
-            connection.query(`SELECT CONCAT(e.first_name, " ", e.last_name) AS employee_name FROM employee e;`, (err, res) => {
-                if (err) {
-                    console.error(err);
-                } else if (res.length > 0) {
-                    let employeeList = res.map(({ employee_name }) => ({ value: employee_name }));
-                    inquirer.prompt([
-                        {
-                            name: `employee`,
-                            type: `list`,
-                            message: `Whose role would you like to update?`,
-                            choices: employeeList,
-                        }
-                    ])
-                    .then((answer) => {
-                        const employee = {};
-                        employee.first_name = answer.employee.split(" ")[0];
-                        employee.last_name = answer.employee.split(" ")[1];
-                        console.log(employee);
-                        connection.query(`SELECT r.title AS roles FROM role r;`, (err, res) => {
-                            if (err) {
-                                console.error(err)
-                            } else if (res.length > 0) {
-                                const roleList = res.map(({ roles }) => ({ value: roles }));
-                                inquirer.prompt([
-                                    {
-                                        name: `role`,
-                                        type: `list`,
-                                        message: `What is ${employee.first_name}'s new role?`,
-                                        choices: roleList,
-                                    }
-                                ])
-                                .then((answer) => {
-                                    employee.role = answer.role;
-                                    console.log(employee.role);
-                                    updateEmployeeRole(employee);
-                                })
-                            }
-                        });
-                    });
-                }
-            });
-        } else if (choices === `Quit`) {
-            process.exit();
-        }
-    });
-}
-
-const consolePrinters = (res) => {
-    let formattedResults = JSON.parse(JSON.stringify(res));
+        if(selectedFunction) {
+            viewAll(selectedFunction);
+        } else {
             console.clear();
-            printTable(formattedResults);
+            console.log(prompts.header);
+            console.log(`Invalid choice. Please select a valid option.`);
             menu();
+        }
+    })
 }
 
-const viewAllDepartments = () => {
-    connection.query(`SELECT d.id, d.name AS department FROM department d;`, (err, res) => {
-        if (err) {
-            console.error(err);
-        } else if (res.length > 0) {
-            consolePrinters(res);
-        }
-    });
-}
-
-const viewAllRoles = () => {
-    connection.query('SELECT r.title AS job_title, d.name AS department, r.salary FROM role r JOIN department d ON r.department_id = d.id;', (err, res) => {
-        if (err) {
-            console.error(err);
-        } else if (res.length > 0) {
-            consolePrinters(res);
-        }
-    });
-}
-
-const viewAllEmployees = () => {
-    connection.query(`SELECT e.id, CONCAT(e.first_name, " ",e.last_name) AS employee_name, r.title AS role, d.name AS department, r.salary, CONCAT(m.first_name, " ", m.last_name) AS manager FROM employee e JOIN role r ON e.role_id = r.id JOIN department d ON r.department_id = d.id LEFT JOIN employee m ON e.manager_id = m.id ORDER BY e.id ASC;`, (err, res) => {
-        if (err) {
-            console.error(err);
-        } else if (res.length > 0) {
-            consolePrinters(res);
-        }
-    });
-}
-
-const addNewDepartment = (newDpt) => {
-    const { title } = newDpt;
-    connection.query('INSERT INTO department (name) VALUES (?);', title, (err) => {
-        if (err) {
-            console.error(err);
-        }
-        console.log(`The table has been updated to include ${title}!`);
+const viewAll = async (callback) => {
+    try {
+        await callback.call(explore);
         menu();
-    });
-}
-
-const addNewRole = (newRole) => {
-    const { title, salary, department } = newRole;
-    connection.query('SELECT d.id FROM department d WHERE name = (?);', department, (err, res) => {
-        if (err) {
-            console.error(err);
-        } else if (res.length > 0) {
-            const department_id = res[0].id;
-
-            connection.query('INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?);', [title, salary, department_id], (err) => {
-                if (err) {
-                    console.error(err);
-                } else {
-                    console.log(`The role table has been updated to include ${title}!`);
-                    menu();
-                }
-            });
-        }
-    });
-}
-
-const addNewEmployee = (newEmployee) => {
-    const { first_name, last_name, role, manager } = newEmployee;
-    connection.query(`SELECT r.id AS id FROM role r WHERE title = ?;`, [role], (err, res) => {
-        if (err) {
-            console.error(err);
-        } else {
-            const role_id = res[0].id;
-            if (manager === 'null') {
-                connection.query(`INSERT INTO employee (first_name, last_name, role_id) VALUES (?, ?, ?);`, [first_name, last_name, role_id], (err) => {
-                    if (err) {
-                        console.error(err);
-                    } else {
-                        console.log(`The employee table has been updated to include ${first_name + ' ' + last_name}'s information!`)
-                        menu();
-                    }
-                });
-            } else {
-                connection.query(`SELECT e.id AS id FROM employee e WHERE first_name = ?;`, [manager], (err, res) => {
-                    if (err) {
-                        console.error(err);
-                    } else {
-                        const manager_id = res[0].id;
-                        connection.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?);`, [first_name, last_name, role_id, manager_id], (err) => {
-                            if (err) {
-                                console.error(err);
-                            } else {
-                                console.log(`The employee table has been updated to include ${first_name + ' ' + last_name}'s information!`);
-                                menu();
-                            }
-                        });
-                    }
-                });
-            }
-        }
-    });
-}
-
-const updateEmployeeRole = (employee) => {
-    const { first_name, last_name, role } = employee;
-    connection.query(`UPDATE employee SET role_id = ? WHERE first_name = ? AND last_name = ?;`, [role, first_name, last_name], (err, res) => {
-        if (err) {
-            console.error(err);
-        } else {
-            console.log(`The employee table has been updated with ${first_name}'s new role!`);
-            menu();
-        }
-    });
+    } catch (error) {
+        console.error(error);
+    }
 }
