@@ -12,7 +12,7 @@
 
 [Demonstration](#demonstration)
 
-[License](#license)
+[License Information](#license-information)
 
 [References](#references)
 
@@ -52,11 +52,30 @@ WHEN I choose to update an employee role
 THEN I am prompted to select an employee to update and their new role and this information is updated in the database
 
 ## Installation
+Employee Tracker can be cloned to a local repository and run in your CLI with 'npm start' or 'node index.js' commands.
 
 ## Usage
+Open the application's directory and run 'npm start' or 'node index.js' in the command line. You will then be presented with a menu of options to choose from. 
+
+1. View all departments- Prints a table containing every department stored in the Employee Tracker database.
+
+2. View all roles- Prints a table containing every role stored in the Employee Tracker database.
+
+3. View all employees- Prints a table containing every employee stored in the Employee Tracker databse.
+
+4. Add a department- Prompts the user for the name of a new department they would like to add to the Employee Tracker databse.
+
+5. Add a role- Prompts the user for the name and salary of a new role they would like to add to the Employee Tracker database.
+
+6. Add an employee- Prompts the user for the name, role, and manager name of a new employee they would like to add to the Employee Tracker database.
+
+7. Update an employee role- Prompts the user for the name of an employee, then allows user to change that employee's role within the Employee Tracker database.
 
 ## Demonstration
 
-## License
+## License Information
+![MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+
+[LICENSE](./LICENSE)
 
 ## References

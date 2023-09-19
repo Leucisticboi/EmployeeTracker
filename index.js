@@ -16,7 +16,7 @@ const menuChoices = {
     'View all roles': explore.allRoles,
     'View all employees': explore.allEmployees,
     'Add a new department': () => explore.newDepartment(prompts.newDpt),
-    'Add a new role': () => explore.newRole(prompts.newDpt),
+    'Add a new role': () => explore.newRole(prompts.newRole),
     'Add a new employee': () => explore.newEmployee(prompts.newEmp),
     "Update an employee's role": explore.updateEmployeeRole,
     'Quit': () => {
