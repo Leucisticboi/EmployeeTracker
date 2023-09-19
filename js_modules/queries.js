@@ -1,9 +1,12 @@
+// Import required modules and packages
 const { printTable } = require(`console-table-printer`);
 const connection = require(`../config/connection`);
 const inquirer = require(`inquirer`);
 
+// DatabaseExplorer class to handle database exploration operations
 class DatabaseExplorer {
     constructor() {
+        // Header for the database explorer
         this.header = `
         ╔════════════════════════════════════╗
         ║      Database Explorer             ║
@@ -11,15 +14,18 @@ class DatabaseExplorer {
         `;
     }
 
+        // Function to print results to the console in a tabular format
         async consolePrinters (res) {
             let formattedResults = JSON.parse(JSON.stringify(res));
                     console.clear();
                     console.log(this.header);
                     printTable(formattedResults);
         }
-        
+
+        // Function to retrieve all departments from the database
         async allDepartments () {
             return new Promise((resolve, reject) => {
+                // Query to fetch departments from the databse
                 connection.query(`SELECT d.id, d.name AS department FROM department d;`, (err, res) => {
                     if (err) {
                         console.error(err);
@@ -32,8 +38,10 @@ class DatabaseExplorer {
             });
         }
         
+        // Function to retrieve all roles from the database
         async allRoles () {
             return new Promise((resolve, reject) => {
+                // Query to fetch roles and their respective departments from the database
                 connection.query('SELECT r.title AS job_title, d.name AS department, r.salary FROM role r JOIN department d ON r.department_id = d.id;', (err, res) => {
                     if (err) {
                         console.error(err);
@@ -46,8 +54,10 @@ class DatabaseExplorer {
             })
         }
         
+        // Function to retrieve all employees from the database
         async allEmployees () {
             return new Promise((resolve, reject) => {
+                // Query to fetch all employees from the database
                 connection.query(`SELECT * FROM employee;`, (err, res) => {
                     if (err) {
                         console.error(err);
@@ -60,6 +70,7 @@ class DatabaseExplorer {
             });
         }
         
+        // Funciton to add a new department to the database
         async newDepartment (prompt) {
             console.clear();
             console.log(this.header);
@@ -92,6 +103,7 @@ class DatabaseExplorer {
                     }
                 ]);
             
+                // Insert a new department into the database
                 return new Promise((resolve, reject) => {
                     connection.query(`INSERT INTO department (name) VALUES (?);`, [title, manager_id], (err) => {
                         if (err) {
@@ -111,6 +123,7 @@ class DatabaseExplorer {
             }
         }
         
+        // Function to add a new role to the database
         async newRole (prompt) {
             console.clear();
             console.log(this.header);
@@ -149,8 +162,8 @@ class DatabaseExplorer {
                 const [departmentRow] = await connection.promise().query('SELECT d.id FROM department d WHERE name = ?;', department);
                 const id = departmentRow[0]?.id;
         
+                // Insert the new role into the database
                 return new Promise((resolve, reject) => {
-                    // Insert the new role into the database
                     connection.query('INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?);', [title, salary, id], (err) => {
                         if (err) {
                             console.error(err);
@@ -169,6 +182,7 @@ class DatabaseExplorer {
             }
         }
         
+        // Function to add a new employee to the database
         async newEmployee (prompt) {
             try {
                 const employeeAnswers = await inquirer.prompt(prompt);
@@ -179,6 +193,7 @@ class DatabaseExplorer {
                 };
         
                 const roles = await new Promise((resolve, reject) => {
+                    // Query to fetch roles from the database
                     connection.query('SELECT r.title FROM role r;', (err, res) => {
                         if (err) {
                             console.error(err);
@@ -201,6 +216,7 @@ class DatabaseExplorer {
                 newEmployee.role = roleAnswer.role;
         
                 const managers = await new Promise((resolve, reject) => {
+                    // Query to fetch managers from the database
                     connection.query('SELECT CONCAT(e.first_name, " ", e.last_name) AS manager FROM employee e WHERE manager_id IS null;', (err, res) => {
                         if (err) {
                             console.error(err);
@@ -231,11 +247,13 @@ class DatabaseExplorer {
             }
         };
         
+        // Function to add an employee to the database
         async addEmployeeToDatabase (newEmployee) {
             try {
                 const { first_name, last_name, role, manager } = newEmployee;
         
                 const roleResult = await new Promise((resolve, reject) => {
+                    // Query to fetch role ID from the database
                     connection.query('SELECT r.id AS id FROM role r WHERE title = ?;', [role], (err, res) => {
                         if (err) {
                             console.error(err);
@@ -250,6 +268,7 @@ class DatabaseExplorer {
         
                 if (manager === null) {
                     await new Promise((resolve, reject) => {
+                        // Insert the employee information into the database
                         connection.query('INSERT INTO employee (first_name, last_name, role_id) VALUES (?, ?, ?);', [first_name, last_name, role_id], (err) => {
                             if (err) {
                                 console.error(err);
@@ -262,6 +281,7 @@ class DatabaseExplorer {
                     });
                 } else {
                     const managerResult = await new Promise((resolve, reject) => {
+                        // Query to fetch manager ID from the database
                         connection.query('SELECT e.id AS id FROM employee e WHERE first_name = ?;', [manager], (err, res) => {
                             if (err) {
                                 console.error(err);
@@ -275,6 +295,7 @@ class DatabaseExplorer {
                     const manager_id = managerResult.id;
         
                     await new Promise((resolve, reject) => {
+                        // Insert the employee information into the database with manager ID
                         connection.query('INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?);', [first_name, last_name, role_id, manager_id], (err) => {
                             if (err) {
                                 console.error(err);
@@ -293,9 +314,11 @@ class DatabaseExplorer {
             }
         };
         
+        // Function to update an employee's role in the database
         async updateEmployeeRole () {
             try {
                 const employeeList = await new Promise((resolve, reject) => {
+                    // Query to fetch a list of employees from the database
                     connection.query('SELECT CONCAT(e.first_name, " ", e.last_name) AS employee_name, e.id FROM employee e;', (err, res) => {
                         if (err) {
                             console.error(err);
@@ -332,6 +355,7 @@ class DatabaseExplorer {
 
         
                 const roleList = await new Promise((resolve, reject) => {
+                    // Query to fetch a list of roles from the database
                     connection.query('SELECT r.title, r.id AS role_id FROM role r;', (err, res) => {
                         if (err) {
                             console.error(err);
@@ -363,6 +387,7 @@ class DatabaseExplorer {
                 employee.role = roleAnswer.role;
         
                 await new Promise((resolve, reject) => {
+                    // Update the employee's role in the database
                     connection.query('UPDATE employee SET role_id = ? WHERE first_name = ? AND last_name = ?;', [employee.role, employee.first_name, employee.last_name], (err) => {
                         if (err) {
                             console.error(err);
@@ -381,8 +406,5 @@ class DatabaseExplorer {
         };
 };
 
-
-
-
-
+// Export the DatabaseExplorer class
 module.exports = DatabaseExplorer;

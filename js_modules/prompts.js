@@ -6,6 +6,7 @@ class Prompts {
         ╚════════════════════════════════════╝
         `;
 
+        // Prompt with choices for application's main menu
         this.mainMenuList = [
             {
                 name: `choices`,
@@ -24,6 +25,7 @@ class Prompts {
             }
         ];
 
+        // Prompt for name of new department
         this.newDpt = [
             {
                 name: 'title',
@@ -32,6 +34,7 @@ class Prompts {
             }
         ];
 
+        // Prompt for name and salary of new role
         this.newRole = [
             {
                 name: 'title',
@@ -45,6 +48,7 @@ class Prompts {
             }
         ];
 
+        // Prompt for first and last name of new employee
         this.newEmp = [
             {
                 name: 'first_name',
@@ -60,6 +64,5 @@ class Prompts {
     }
 }
 
-
-
+// Export Prompts class
 module.exports = Prompts;

@@ -11,6 +11,7 @@ const explore = new DatabaseExplorer();
 
 app.use(express.json());
 
+// Initialize list of potential menu choices with corresponding functions to run
 const menuChoices = {
     'View all departments': explore.allDepartments,
     'View all roles': explore.allRoles,
@@ -25,7 +26,9 @@ const menuChoices = {
     },
 };
 
+// Start server connection
 connection.connect((err) => {
+    // Check for connection errors
     if (err) {
         console.error(err);
         return;
@@ -35,14 +38,21 @@ connection.connect((err) => {
     menu();
 });
 
+// Initialize 'menu' function
 const menu = () => {
+    // Begin by running an inquirer prompt using 'mainMenuList'
     inquirer.prompt(prompts.mainMenuList).then((result) => {
+        // Deconstruct 'choices' variable from the prompt result
         const { choices } = result;
+        // Initialize 'selectedFunction' variable using the 'choices' to select from the 'menuChoices' array
         const selectedFunction = menuChoices[choices];
 
+        // Make sure 'selectedFunction' exists
         if(selectedFunction) {
+            // Pass 'selectedFunction' to 'viewAll' function
             viewAll(selectedFunction);
         } else {
+            // If 'selectedFunction' is null, restart application and prompt user to select a menu option
             console.clear();
             console.log(prompts.header);
             console.log(`Invalid choice. Please select a valid option.`);
@@ -51,6 +61,7 @@ const menu = () => {
     })
 }
 
+// Initialize 'viewAll' async function
 const viewAll = async (callback) => {
     try {
         await callback.call(explore);

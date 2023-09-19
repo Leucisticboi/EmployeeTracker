@@ -72,6 +72,7 @@ Open the application's directory and run 'npm start' or 'node index.js' in the c
 7. Update an employee role- Prompts the user for the name of an employee, then allows user to change that employee's role within the Employee Tracker database.
 
 ## Demonstration
+[Video Demonstration](https://drive.google.com/file/d/1GHfKYWtSupl5asnVF4l3pzKzU2XjJ_Gx/view)
 
 ## License Information
 ![MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
@@ -79,3 +80,4 @@ Open the application's directory and run 'npm start' or 'node index.js' in the c
 [LICENSE](./LICENSE)
 
 ## References
+I used ChatGPT to come up with some comments for my code.
